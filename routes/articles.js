@@ -58,7 +58,11 @@ module.exports = function(app){
 
         console.log('GET - /article/:slug/edit');
 
-        var user = req.session.user;
+        var user = req.user;
+        if (!user) {
+            res.statusCode = 404;
+            return res.send({ error: 'Page not found' });
+        }
         return Article.findOne({ slug: req.params.slug, author: user._id }, function(err, article){
             if(!article){
                 res.statusCode = 404;
@@ -84,48 +88,40 @@ module.exports = function(app){
     createArticle = function(req, res){
         
         console.log('POST - /article');
-        var user = req.session.user;
+        var user = req.user;
         var article = new Article({
             title       : req.body.title,
             description : req.body.description,
             content     : req.body.content,
-            author      : user._id
+            author      : user.id
         });
 
-
-        User.findById(user._id, function(err, user) {
-            if(err || !user){ 
+        if (!user) {
+            res.statusCode = 404;
+            return res.send({ error: 'Page not found' });
+        }
+        article.save(function(err){
+            if(err){
+                if(err.name == 'ValidationError'){
+                    res.statusCode = 400;
+                    return res.render('articles/failed_created', { message: err, article: article });
+                }
+                console.log('Error while saving article : ' + err);
+                res.send({ error: err });
+                return
+            }else{
+                console.log('Article created')
                 req.session.flashMessage = {
-                    type: 'error',
-                    message: 'Article was failed to create.'
+                    type: 'success',
+                    message: 'Article was successfully created.'
                 }
 
-                return res.redirect('/articles');
+                user.articles.push(article);
+                user.save();
+                return res.redirect('/article/'+ article.slug);
             }
-
-
-            article.save(function(err){
-                if(err){
-                    if(err.name == 'ValidationError'){
-                        res.statusCode = 400;
-                        return res.render('articles/failed_created', { message: err, article: article });
-                    }
-                    console.log('Error while saving article : ' + err);
-                    res.send({ error: err });
-                    return
-                }else{
-                    console.log('Article created')
-                    req.session.flashMessage = {
-                        type: 'success',
-                        message: 'Article was successfully created.'
-                    }
-
-                    user.articles.push(article);
-                    user.save();
-                    return res.redirect('/article/'+ article.slug);
-                }
-            });
         });
+        
     };
 
     /**
@@ -216,6 +212,11 @@ module.exports = function(app){
     app.post('/article', createArticle);
     
     app.get('/article/new', function(req, res) {
+        var user = req.user;
+        if (!user) {
+            res.statusCode = 404;
+            return res.send({ error: 'Page not found' });
+        }
         return res.render('articles/new');
     });
 
