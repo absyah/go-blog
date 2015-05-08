@@ -37,7 +37,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser('secret'));
 app.use(session({
-    secret: 'cookieSecret',
+    secret: 'secret',
     resave: true,
     saveUninitialized: true,
     store: sessionStore,
@@ -57,7 +57,7 @@ app.use(function(req, res, next){
 
 // Displays user
 app.use(function(req, res, next){
-    res.locals.user = req.session.user;
+    res.locals.user = req.user;
     next();
 });
 
@@ -72,7 +72,7 @@ app.use(methodOverride(function(req, res){
 }))
 
 // passport config
-var passport = require('./config/passport');
+var passport = require('./config/passport')(app);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
