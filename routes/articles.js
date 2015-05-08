@@ -63,7 +63,7 @@ module.exports = function(app){
             res.statusCode = 404;
             return res.send({ error: 'Page not found' });
         }
-        return Article.findOne({ slug: req.params.slug, author: user._id }, function(err, article){
+        return Article.findOne({ slug: req.params.slug, author: user.id }, function(err, article){
             if(!article){
                 res.statusCode = 404;
                 return res.send({ error: 'Page not found' });
