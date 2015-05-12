@@ -15,7 +15,8 @@ module.exports = function(app){
         
         return Article.find().populate('author').exec(function(err, articles){
             if(!err){
-                return res.render('articles/index', { articles: articles });
+                return res.send({ articles: articles })
+                // return res.render('articles/index', { articles: articles });
             }else{
                 res.statusCode = 500;
                 console.log('Internal error(%d): %s', res.statusCode, err.message);
